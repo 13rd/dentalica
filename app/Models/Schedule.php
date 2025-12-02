@@ -15,6 +15,9 @@ class Schedule extends Model
         'time_slot',
         'is_available',
     ];
+    /* protected $cast = [ */
+    /*     'date' => 'datetime:Y-m-d', */
+    /* ]; */
 
     public function doctor()
     {

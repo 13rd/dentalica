@@ -34,12 +34,19 @@ Route::middleware('auth')->group(function () {
         Route::get('/patient/dashboard', [PatientController::class, 'dashboard'])->name('patient.dashboard');
         Route::get('/patient/profile', [PatientController::class, 'profile'])->name('patient.profile');
         Route::post('/patient/profile', [PatientController::class, 'updateProfile']);
+        Route::post('/appointment/{appointment}/cancel', [PatientController::class, 'cancel'])->name('appointment.cancel');
+        Route::get('/appointment/{appointment}/pay', [AppointmentController::class, 'pay'])->name('appointment.pay');
+        Route::post('/appointment/{appointment}/pay', [AppointmentController::class, 'processPayment'])->name('appointment.process-payment');
     });
 
     // Doctor routes
     Route::middleware('role:doctor')->prefix('doctor')->group(function () {
         Route::get('/dashboard', [DoctorController::class, 'dashboard'])->name('doctor.dashboard');
         Route::get('/schedule', [DoctorController::class, 'schedule'])->name('doctor.schedule');
+        Route::post('/appointment/{appointment}/complete', [DoctorController::class, 'complete'])->name('doctor.appointment.complete');
+        Route::post('/appointment/{appointment}/cancel', [DoctorController::class, 'cancel'])->name('doctor.cancel');
+        Route::get('/schedule/create', [DoctorController::class, 'createSchedule'])->name('doctor.schedule.create');
+        Route::post('/schedule/create', [DoctorController::class, 'createSchedule']);
     });
 
     // Admin routes
@@ -53,10 +60,17 @@ Route::middleware('auth')->group(function () {
     });
 
     // General routes
-    Route::resource('doctors', DoctorController::class)->only(['index', 'show']);
-    Route::get('/appointments/create/{doctor}', [AppointmentController::class, 'create'])->name('appointments.create');
-    Route::post('/appointments', [AppointmentController::class, 'store'])->name('appointments.store');
-    Route::post('/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])->name('appointments.cancel');
+    Route::get('/doctors', [DoctorController::class, 'index'])->name('doctors.index');
+    Route::get('/doctors/{doctor}', [DoctorController::class, 'show'])->name('doctors.show');
+
+    Route::middleware(['auth', 'role:patient'])->group(function () {
+        Route::get('/appointments/create/{doctor}', [AppointmentController::class, 'create'])
+            ->name('appointments.create');
+
+        Route::post('/appointments/{doctor}', [AppointmentController::class, 'store'])
+            ->name('appointments.store');
+    });
+    //Route::post('/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])->name('appointments.cancel');
     Route::post('/appointments/{appointment}/complete', [AppointmentController::class, 'complete'])->name('appointments.complete');
     Route::post('/reviews/{appointment}', [ReviewController::class, 'store'])->name('reviews.store');
 });

@@ -9,8 +9,16 @@ class SpecializationSeeder extends Seeder
 {
     public function run(): void
     {
-        Specialization::create(['name' => 'Orthodontist']);
-        Specialization::create(['name' => 'Surgeon']);
-        // Add more
+        $specializations = [
+            'Терапевт',
+            'Ортодонт',
+            'Хирург-имплантолог',
+            'Ортопед (протезист)',
+            'Пародонтолог',
+        ];
+
+        foreach ($specializations as $name) {
+            Specialization::firstOrCreate(['name' => $name]);
+        }
     }
-};
+}

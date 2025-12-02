@@ -24,7 +24,9 @@
                         @else
                             <li class="nav-item"><a class="nav-link" href="{{ route('patient.dashboard') }}">Patient Dashboard</a></li>
                         @endif
-                        <li class="nav-item"><a class="nav-link" href="{{ route('doctors.index') }}">Doctors</a></li>
+                        @if (!auth()->user()->isDoctor())
+                            <li class="nav-item"><a class="nav-link" href="{{ route('doctors.index') }}">Doctors</a></li>
+                        @endif
                         <li class="nav-item">
                             <form action="{{ route('logout') }}" method="POST">
                                 @csrf

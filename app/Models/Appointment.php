@@ -14,8 +14,22 @@ class Appointment extends Model
         'doctor_id',
         'schedule_id',
         'status',
-        'payment_status',
+        'base_price',
         'total_price',
+        'payment_status',
+        'paid_at',
+        'expires_at',
+    ];
+
+    protected $casts = [
+        'paid_at'     => 'datetime',
+        'expires_at'  => 'datetime',
+        'base_price'  => 'decimal:2',
+        'total_price' => 'decimal:2',
+
+        // ← ВОТ ЭТА СТРОКА РЕШАЕТ ВСЁ!
+        'payment_status' => 'string',
+        'status'         => 'string',
     ];
 
     public function patient()
