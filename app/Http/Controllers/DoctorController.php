@@ -15,7 +15,13 @@ class DoctorController extends Controller
     public function __construct(ScheduleService $scheduleService){
         $this->scheduleService = $scheduleService;
         $this->middleware('auth');
-        $this->middleware('role:doctor')->except(['index', 'show']);
+        $this->middleware('role:doctor')->only([
+            'dashboard',
+            'schedule',
+            'getSchedule',
+            'createSchedule',
+        ]);
+        $this->middleware('role:patient')->only(['index', 'show']);
     }
 
     public function index(Request $request)

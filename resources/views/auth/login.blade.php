@@ -3,20 +3,16 @@
 @section('title', 'Вход')
 
 @section('content')
-<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8">
-        <div>
-            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                Вход в личный кабинет
-            </h2>
-            <p class="mt-2 text-center text-sm text-gray-600">
-                Запишитесь к стоматологу онлайн
-            </p>
+<div class="auth-shell">
+    <div class="app-card auth-card p-4 p-sm-5 shadow-soft">
+        <div class="text-center mb-3">
+            <h2 class="page-title mb-1">Вход в личный кабинет</h2>
+            <p class="auth-subtitle">Запишитесь к стоматологу онлайн</p>
         </div>
 
         @if ($errors->any())
             <div class="alert alert-danger">
-                <ul>
+                <ul class="mb-0">
                     @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
                     @endforeach
@@ -24,60 +20,50 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('login') }}" class="mt-8 space-y-6">
+        <form method="POST" action="{{ route('login') }}" class="mt-4 d-flex align-items-center justify-content-center flex-column gap-4">
             @csrf
 
-            <div class="rounded-md shadow-sm -space-y-px">
-                <div>
-                    <label for="email" class="sr-only">Email</label>
-                    <input id="email" name="email" type="email" autocomplete="email" required
-                           class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm {{ $errors->has('email') ? 'is-invalid' : '' }}"
-                           placeholder="Email адрес" value="{{ old('email') }}" autofocus>
-                    @error('email')
-                        <div class="invalid-feedback text-danger">{{ $message }}</div>
-                    @enderror
-                </div>
-                <div>
-                    <label for="password" class="sr-only">Пароль</label>
-                    <input id="password" name="password" type="password" autocomplete="current-password" required
-                           class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm {{ $errors->has('password') ? 'is-invalid' : '' }}"
-                           placeholder="Пароль">
-                    @error('password')
-                        <div class="invalid-feedback text-danger">{{ $message }}</div>
-                    @enderror
-                </div>
+            <div class="col-4">
+                <label for="email" class="form-label">Email</label>
+                <input id="email" name="email" type="email" autocomplete="email" required
+                       class="form-control {{ $errors->has('email') ? 'is-invalid' : '' }}"
+                       placeholder="email@example.com" value="{{ old('email') }}" autofocus>
+                @error('email')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
             </div>
 
-            <div class="flex items-center justify-between">
-                <div class="flex items-center">
-                    <input id="remember" name="remember" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                    <label for="remember" class="ml-2 block text-sm text-gray-900">
-                        Запомнить меня
-                    </label>
+            <div class="col-4">
+                <label for="password" class="form-label">Пароль</label>
+                <input id="password" name="password" type="password" autocomplete="current-password" required
+                       class="form-control {{ $errors->has('password') ? 'is-invalid' : '' }}"
+                       placeholder="Ваш пароль">
+                @error('password')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="form-check">
+                    <input id="remember" name="remember" type="checkbox" class="form-check-input">
+                    <label for="remember" class="form-check-label">Запомнить меня</label>
                 </div>
 
                 @if (Route::has('password.request'))
-                    <div class="text-sm">
-                        <a href="{{ route('password.request') }}" class="font-medium text-indigo-600 hover:text-indigo-500">
-                            Забыли пароль?
-                        </a>
-                    </div>
+                    <a href="{{ route('password.request') }}" class="link-clean text-decoration-none text-primary">
+                        Забыли пароль?
+                    </a>
                 @endif
             </div>
 
-            <div>
-                <button type="submit"
-                        class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    Войти
-                </button>
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-brand">Войти</button>
             </div>
 
-            <div class="text-center">
-                <p class="text-sm text-gray-600">
+            <div class="text-center mt-3">
+                <p class="auth-subtitle mb-0">
                     Нет аккаунта?
-                    <a href="{{ route('register') }}" class="font-medium text-indigo-600 hover:text-indigo-500">
-                        Зарегистрироваться
-                    </a>
+                    <a href="{{ route('register') }}" class="link-clean text-primary fw-semibold">Зарегистрироваться</a>
                 </p>
             </div>
         </form>

@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Appointment;
+use App\Models\Schedule;
+use App\Models\Service;
+use Carbon\Carbon;
 
 class PatientController extends Controller
 {
@@ -40,21 +43,47 @@ class PatientController extends Controller
 
         return back()->with('success', 'Профиль обновлён');
     }
-public function cancel(Appointment $appointment)
-{   //TODO:if's to middleware
+    public function weekAppointments()
+    {
+        $start = Carbon::today();
+        $end = Carbon::today()->addDays(6);
+
+        $slotsByDate = Schedule::with(['doctor.user'])
+            ->where('is_available', true)
+            ->whereBetween('date', [$start->toDateString(), $end->toDateString()])
+            ->orderBy('date')
+            ->orderBy('time_slot')
+            ->get()
+            ->groupBy(function ($slot) {
+                return Carbon::parse($slot->date)->toDateString();
+            });
+
+        $services = Service::all();
+
+        return view('patient.appointments.week', [
+            'slotsByDate' => $slotsByDate,
+            'services'    => $services,
+            'start'       => $start,
+            'end'         => $end,
+        ]);
+    }
+
+    public function cancel(Appointment $appointment)
+    {   //TODO:if's to middleware
 
     // Проверяем, что запись принадлежит текущему пациенту
     if ($appointment->patient_id !== auth()->id()) {
         abort(403);
     }
 
-    // Нельзя отменять уже оплаченные или давно отменённые
-    if ($appointment->payment_status === 'paid') {
-        return back()->with('error', 'Оплаченную запись нельзя отменить');
-    }
-
+    // Нельзя отменять давно отменённые
     if ($appointment->status === 'cancelled') {
         return back()->with('info', 'Запись уже отменена');
+    }
+
+    // Нельзя отменять завершенные приёмы
+    if ($appointment->status === 'completed') {
+        return back()->with('error', 'Завершённый приём нельзя отменить');
     }
 
     // Отменяем запись
@@ -67,6 +96,10 @@ public function cancel(Appointment $appointment)
     // ВАЖНО: освобождаем слот!
     $appointment->schedule->update(['is_available' => true]);
 
-    return back()->with('success', 'Запись успешно отменена. Слот снова доступен для бронирования.');
+    $message = $appointment->payment_status === 'paid'
+        ? 'Запись успешно отменена. Деньги будут возвращены на ваш счёт в течение 2 часов.'
+        : 'Запись успешно отменена. Слот снова доступен для бронирования.';
+
+    return back()->with('success', $message);
 }
 }

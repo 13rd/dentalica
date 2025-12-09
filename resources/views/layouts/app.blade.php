@@ -36,6 +36,7 @@
                     @endif
 
                     @if (auth()->user()->isPatient())
+                        <li class="nav-item"><a class="nav-link" href="{{ route('patient.appointments.week') }}">Записаться</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('doctors.index') }}">Doctors</a></li>
                     @endif
 

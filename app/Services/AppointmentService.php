@@ -13,7 +13,13 @@ class AppointmentService
 
     public function createAppointment($patientId, Schedule $schedule, array $serviceIds = []): Appointment
     {
-        if (!$schedule->is_available || $schedule->appointment()->exists()) {
+        // Проверяем доступность слота: должен быть доступен И не иметь активных записей
+        $hasActiveAppointment = $schedule->appointment()
+            ->whereNotIn('status', ['cancelled'])
+            ->whereNull('deleted_at')
+            ->exists();
+
+        if (!$schedule->is_available || $hasActiveAppointment) {
             throw new \Exception('Этот слот уже занят.');
         }
 
@@ -77,15 +83,19 @@ class AppointmentService
             throw new \Exception('Эту запись нельзя отменить.');
         }
 
-        $this->cancelAppointment($appointment);
+        $this->cancelAppointment($appointment, false); // Keep record for patient cancellations
     }
 
 
     public function cancelByDoctor(Appointment $appointment): void
     {
-        $this->cancelAppointment($appointment);
+        $this->cancelAppointment($appointment, false); // Keep record for doctor cancellations
     }
 
+    public function cancelExpiredAppointment(Appointment $appointment): void
+    {
+        $this->cancelAppointment($appointment, true); // Delete expired appointments
+    }
 
     public function completeAppointment(Appointment $appointment): void
     {
@@ -97,10 +107,21 @@ class AppointmentService
     }
 
 
-    private function cancelAppointment(Appointment $appointment): void
+    private function cancelAppointment(Appointment $appointment, bool $delete = false): void
     {
-
+        // Освобождаем слот
         $appointment->schedule()->update(['is_available' => true]);
-        $appointment->delete();
+
+        if ($delete) {
+            // Удаляем запись полностью (для истекших по времени оплаты)
+            $appointment->delete();
+        } else {
+            // Помечаем как отменённую (для ручной отмены)
+            $appointment->update([
+                'status' => 'cancelled',
+                'payment_status' => 'cancelled',
+                'expires_at' => null,
+            ]);
+        }
     }
 }

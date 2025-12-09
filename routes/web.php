@@ -34,9 +34,20 @@ Route::middleware('auth')->group(function () {
         Route::get('/patient/dashboard', [PatientController::class, 'dashboard'])->name('patient.dashboard');
         Route::get('/patient/profile', [PatientController::class, 'profile'])->name('patient.profile');
         Route::post('/patient/profile', [PatientController::class, 'updateProfile']);
+        Route::get('/patient/appointments/week', [PatientController::class, 'weekAppointments'])->name('patient.appointments.week');
         Route::post('/appointment/{appointment}/cancel', [AppointmentController::class, 'cancel'])->name('appointment.cancel');
         Route::get('/appointment/{appointment}/pay', [AppointmentController::class, 'pay'])->name('appointment.pay');
         Route::post('/appointment/{appointment}/pay', [AppointmentController::class, 'processPayment'])->name('appointment.process-payment');
+
+        // Doctor catalogue (patients only)
+        Route::get('/doctors', [DoctorController::class, 'index'])->name('doctors.index');
+        Route::get('/doctors/{doctor}', [DoctorController::class, 'show'])->name('doctors.show');
+
+        Route::get('/appointments/create/{doctor}', [AppointmentController::class, 'create'])
+            ->name('appointments.create');
+
+        Route::post('/appointments/{doctor}', [AppointmentController::class, 'store'])
+            ->name('appointments.store');
     });
 
     // Doctor routes
@@ -59,17 +70,6 @@ Route::middleware('auth')->group(function () {
         Route::patch('/services/{service}', [AdminController::class, 'updateService'])->name('admin.services.update');
     });
 
-    // General routes
-    Route::get('/doctors', [DoctorController::class, 'index'])->name('doctors.index');
-    Route::get('/doctors/{doctor}', [DoctorController::class, 'show'])->name('doctors.show');
-
-    Route::middleware(['auth', 'role:patient'])->group(function () {
-        Route::get('/appointments/create/{doctor}', [AppointmentController::class, 'create'])
-            ->name('appointments.create');
-
-        Route::post('/appointments/{doctor}', [AppointmentController::class, 'store'])
-            ->name('appointments.store');
-    });
     //Route::post('/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])->name('appointments.cancel');
     /* Route::post('/appointments/{appointment}/complete', [AppointmentController::class, 'complete'])->name('appointments.complete'); */
     /* Route::post('/reviews/{appointment}', [ReviewController::class, 'store'])->name('reviews.store'); */

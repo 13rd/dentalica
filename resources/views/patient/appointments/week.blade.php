@@ -1,0 +1,170 @@
+@extends('layouts.app')
+
+@section('title', 'Запись на неделю')
+
+@section('content')
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Запись на неделю</h2>
+            <p class="text-muted mb-0">Выберите время, затем подтвердите запись</p>
+        </div>
+        <span class="badge text-bg-light text-secondary fw-semibold">
+            {{ $start->format('d.m') }} — {{ $end->format('d.m') }}
+        </span>
+    </div>
+
+    @if($slotsByDate->isEmpty())
+        <div class="alert alert-info">Нет доступных слотов на ближайшие 7 дней.</div>
+    @endif
+
+    <div class="row g-4">
+        @for ($i = 0; $i < 7; $i++)
+            @php
+                $date = now()->addDays($i);
+                $dateKey = $date->toDateString();
+                $daySlots = $slotsByDate[$dateKey] ?? collect();
+                $slotsByTime = $daySlots->groupBy('time_slot');
+            @endphp
+
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-header bg-white border-0">
+                        <div class="fw-bold">{{ $date->translatedFormat('d F, l') }}</div>
+                        <small class="text-muted">Свободных окон: {{ $daySlots->count() }}</small>
+                    </div>
+                    <div class="card-body">
+                        @forelse($slotsByTime as $time => $slots)
+                            @php
+                                $slotOptions = $slots->map(fn($slot) => [
+                                    'label'       => $slot->doctor->user->name,
+                                    'doctor_id'   => $slot->doctor_id,
+                                    'schedule_id' => $slot->id,
+                                ])->values();
+                            @endphp
+                            <button
+                                type="button"
+                                class="btn btn-outline-primary w-100 mb-2 text-start time-slot-btn"
+                                data-date="{{ $dateKey }}"
+                                data-date-human="{{ $date->translatedFormat('d F, l') }}"
+                                data-time="{{ $time }}"
+                                data-options='@json($slotOptions)'>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="fw-semibold">{{ $time }}</span>
+                                    <small class="text-muted">{{ $slots->count() }} врач(ей)</small>
+                                </div>
+                            </button>
+                        @empty
+                            <div class="text-muted small">Нет свободных слотов</div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+        @endfor
+    </div>
+</div>
+
+<!-- Модалка для подтверждения записи -->
+<div class="modal fade" id="bookingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Подтверждение записи</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" id="bookingForm">
+                    @csrf
+                    <input type="hidden" name="schedule_id" id="scheduleId">
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Дата и время</label>
+                        <div class="fs-5 fw-semibold" id="slotInfo">—</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">Выберите врача</label>
+                        <select class="form-select" id="doctorSelect" required></select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">Услуги (необязательно)</label>
+                        <div class="row g-2">
+                            @foreach($services as $service)
+                                <div class="col-sm-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="service_ids[]" value="{{ $service->id }}" id="service_{{ $service->id }}">
+                                        <label class="form-check-label" for="service_{{ $service->id }}">
+                                            {{ $service->name }}
+                                            @if(!is_null($service->price))
+                                                <span class="text-muted">({{ $service->price }} ₽)</span>
+                                            @endif
+                                        </label>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="submit" class="btn btn-primary">Подтвердить запись</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const modalElement = document.getElementById('bookingModal');
+    const bookingModal = new bootstrap.Modal(modalElement);
+    const bookingForm = document.getElementById('bookingForm');
+    const scheduleIdInput = document.getElementById('scheduleId');
+    const doctorSelect = document.getElementById('doctorSelect');
+    const slotInfo = document.getElementById('slotInfo');
+    const storeRouteTemplate = @json(route('appointments.store', ['doctor' => '__ID__']));
+
+    let currentOptions = [];
+
+    const applyDoctorSelection = (doctorId) => {
+        const chosen = currentOptions.find(option => option.doctor_id.toString() === doctorId.toString());
+        if (!chosen) {
+            return;
+        }
+        scheduleIdInput.value = chosen.schedule_id;
+        bookingForm.action = storeRouteTemplate.replace('__ID__', chosen.doctor_id);
+    };
+
+    document.querySelectorAll('.time-slot-btn').forEach((button) => {
+        button.addEventListener('click', () => {
+            const options = JSON.parse(button.dataset.options || '[]');
+            currentOptions = options;
+
+            // Заполняем селект врачей
+            doctorSelect.innerHTML = '';
+            options.forEach((option, index) => {
+                const opt = document.createElement('option');
+                opt.value = option.doctor_id;
+                opt.textContent = option.label;
+                doctorSelect.appendChild(opt);
+                if (index === 0) {
+                    applyDoctorSelection(option.doctor_id);
+                }
+            });
+
+            // Информация о выбранном слоте
+            slotInfo.textContent = `${button.dataset.dateHuman} — ${button.dataset.time}`;
+
+            bookingModal.show();
+        });
+    });
+
+    doctorSelect.addEventListener('change', (event) => {
+        applyDoctorSelection(event.target.value);
+    });
+});
+</script>
+@endsection
+

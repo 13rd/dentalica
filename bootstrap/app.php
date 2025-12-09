@@ -23,5 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('appointments:cancel-expired')
                  ->everyMinute()
                  ->withoutOverlapping();
+        $schedule->command('schedules:generate')
+                 ->daily();
     })
     ->create();

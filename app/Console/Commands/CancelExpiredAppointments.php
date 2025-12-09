@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Appointment;
+use App\Services\AppointmentService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -11,7 +12,7 @@ class CancelExpiredAppointments extends Command
     protected $signature = 'appointments:cancel-expired';
     protected $description = 'Отменяет неоплаченные записи через 10 минут';
 
-    public function __construct()
+    public function __construct(protected AppointmentService $appointmentService)
     {
         parent::__construct();
     }
@@ -30,17 +31,8 @@ class CancelExpiredAppointments extends Command
         }
 
         foreach ($expired as $appointment) {
-
-            $appointment->update([
-                'payment_status' => 'cancelled',
-                'status' => 'cancelled',
-                'expires_at' => null,
-            ]);
-
-
-            if ($appointment->schedule) {
-                $appointment->schedule->update(['is_available' => true]);
-            }
+            // Используем сервис для отмены с удалением записи
+            $this->appointmentService->cancelExpiredAppointment($appointment);
 
             $this->info("Запись #{$appointment->id} отменена (время оплаты истекло)");
             Log::info("Автоотмена записи ID: {$appointment->id} для пациента {$appointment->patient_id}");
