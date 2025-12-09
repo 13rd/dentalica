@@ -37,7 +37,7 @@
                                 @if(!$isAvailable && $appointment && $appointment->status !== 'cancelled')
                                     <div class="mt-2">
                                         <strong>Пациент:</strong>
-                                        {{ $appointment->patient->user->name }}
+                                        {{ $appointment->patient->name }}
                                         <small class="text-muted">(+{{ $appointment->patient->user->phone ?? 'телефон не указан' }})</small>
                                     </div>
 
@@ -64,7 +64,7 @@
                             <div class="ms-3">
                                 @if($appointment && $appointment->status !== 'cancelled')
                                     @if($appointment->payment_status === 'paid')
-                                        <form method="POST" action="{{ route('doctor.complete', $appointment) }}" class="d-inline">
+                                        <form method="POST" action="{{ route('doctor.appointment.complete', $appointment) }}" class="d-inline">
                                             @csrf
                                             <button type="submit" class="btn btn-success btn-sm"
                                                     onclick="return confirm('Завершить приём? Пациент будет отмечен как обслуженный.')">

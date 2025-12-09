@@ -59,4 +59,12 @@ class User extends Authenticatable
     {
         return $this->role === 'patient';
     }
+
+    /**
+     * Kept for legacy checks in views; aliases patient role.
+     */
+    public function isUser()
+    {
+        return $this->isPatient();
+    }
 };

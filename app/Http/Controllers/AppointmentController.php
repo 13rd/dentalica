@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Jobs\GenerateSchedules;
 use App\Mail\AppointmentCreated;
+use App\Services\AppointmentService;
 use App\Models\Appointment;
 use App\Models\Schedule;
 use App\Models\Service;
@@ -13,16 +14,17 @@ use Illuminate\Support\Facades\Mail;
 
 class AppointmentController extends Controller
 {
-    public function __construct()
+    public function __construct(AppointmentService $appointmentService)
     {
+        $this->appointmentService = $appointmentService;
         $this->middleware('auth');
-        $this->middleware('role:patient')->except(['index', 'show']);
+        $this->middleware('role:patient')->except(['index', 'show', 'complete']);
+        $this->middleware('role:doctor')->only(['complete']);
     }
 
-    // Показать форму записи к конкретному врачу
-    public function create(Doctor $doctor)
+        public function create(Doctor $doctor)
     {
-        // Загружаем свободные слоты на ближайшие 14 дней
+
         $schedules = Schedule::where('doctor_id', $doctor->id)
             ->where('is_available', true)
             ->where('date', '>=', today())
@@ -37,7 +39,7 @@ class AppointmentController extends Controller
         return view('appointments.create', compact('doctor', 'schedules', 'services'));
     }
 
-    // app/Http/Controllers/AppointmentController.php
+
 
 public function store(Request $request, Doctor $doctor)
 {
@@ -49,38 +51,19 @@ public function store(Request $request, Doctor $doctor)
 
     $schedule = Schedule::findOrFail($request->schedule_id);
 
-    if ($schedule->doctor_id !== $doctor->id || !$schedule->is_available) {
-        return back()->withErrors(['schedule_id' => 'Это время уже занято.']);
+    try {
+        $this->appointmentService->createAppointment(
+            auth()->id(),
+            $schedule,
+            $request->service_ids ?? []
+        );
+    }catch (\Exception $e){
+        return back()->withErrors(['schedule_id' => $e->getMessage()]);
     }
 
-    $basePrice = 2500; // базовая стоимость приёма
-    $servicesPrice = 0;
+    return redirect()->route('patient.dashboard')->with('success', 'Вы записаны! Оплатите в течении 10 минут.');
 
-    if ($request->filled('service_ids')) {
-        $services = Service::find($request->service_ids);
-        $servicesPrice = $services->sum('price');
-    }
 
-    $totalPrice = $basePrice + $servicesPrice;
-
-    $appointment = $doctor->appointments()->create([
-        'patient_id'      => auth()->id(),
-        'schedule_id'     => $schedule->id,
-        'status'          => 'confirmed',
-        'base_price'      => $basePrice,
-        'total_price'     => $totalPrice,
-        'payment_status'  => 'pending',
-        'expires_at'      => now()->addMinutes(10),
-    ]);
-
-    if ($request->filled('service_ids')) {
-        $appointment->services()->sync($request->service_ids);
-    }
-
-    $schedule->update(['is_available' => false]);
-
-    return redirect()->route('patient.dashboard')
-        ->with('success', 'Вы записаны! Оплатите приём в течение 10 минут, иначе запись будет отменена.');
 }
     public function pay(Appointment $appointment)
 {
@@ -100,18 +83,18 @@ public function store(Request $request, Doctor $doctor)
     return view('appointments.pay', compact('appointment'));
 }
 
-public function processPayment(Request $request, Appointment $appointment)
+public function processPayment(Appointment $appointment)
 {
     if ($appointment->patient_id !== auth()->id() || $appointment->payment_status !== 'pending') {
         abort(403);
     }
 
-    // Мок оплаты — всегда успешно
-    $appointment->update([
-        'payment_status' => 'paid',
-        'paid_at' => now(),
-        'expires_at' => null,
-    ]);
+    try {
+        $this->appointmentService->processPayment($appointment);
+
+    } catch (Exception $e) {
+        return redirect()-route('patient.dashboard')->with('error', $e->getMessage());
+    }
 
     return redirect()->route('patient.dashboard')
         ->with('success', 'Оплата прошла успешно! Ждём вас на приёме.');
@@ -123,32 +106,22 @@ public function processPayment(Request $request, Appointment $appointment)
         abort(403);
     }
 
-    if (!in_array($appointment->status, ['confirmed', 'pending'])) {
-        return back()->with('error', 'Эту запись нельзя отменить');
+    try {
+        $this->appointmentService->cancelByPatient($appointment);
+    } catch (Exception $e){
+        return back()->with('error', $e->getMessage());
     }
 
-    // Отменяем
-    $appointment->update([
-        'status'         => 'cancelled',
-        'payment_status' => 'cancelled',
-        'expires_at'     => null,
-    ]);
 
-    // Освобождаем слот
-    $appointment->schedule->update(['is_available' => true]);
-
-    return back()->with('success', 'Запись отменена. Слот снова доступен для бронирования.');
+    return back()->with('success', 'Запись отменена.');
 }
 
     public function complete(Appointment $appointment)
     {
-        if (!auth()->user()->isDoctor() || $appointment->doctor_id !== auth()->user()->doctor->id) {
-            abort(403);
-        }
 
-        $appointment->status = 'completed';
-        $appointment->save();
+        $this->appointmentService->completeAppointment($appointment);
 
-        return back()->with('success', 'Completed');
+
+        return back()->with('success', 'Приём завершён');
     }
 };

@@ -41,7 +41,8 @@ class PatientController extends Controller
         return back()->with('success', 'Профиль обновлён');
     }
 public function cancel(Appointment $appointment)
-{
+{   //TODO:if's to middleware
+
     // Проверяем, что запись принадлежит текущему пациенту
     if ($appointment->patient_id !== auth()->id()) {
         abort(403);

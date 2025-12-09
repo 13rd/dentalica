@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Appointment;        // Это было пропущено!
+use App\Models\Appointment;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -21,7 +21,7 @@ class CancelExpiredAppointments extends Command
         $expired = Appointment::where('payment_status', 'pending')
             ->whereNotNull('expires_at')
             ->where('expires_at', '<=', now())
-            ->with('schedule') // чтобы сразу загрузить слот
+            ->with('schedule')
             ->get();
 
         if ($expired->isEmpty()) {
@@ -30,14 +30,14 @@ class CancelExpiredAppointments extends Command
         }
 
         foreach ($expired as $appointment) {
-            // Отменяем запись
+
             $appointment->update([
                 'payment_status' => 'cancelled',
                 'status' => 'cancelled',
                 'expires_at' => null,
             ]);
 
-            // Освобождаем слот
+
             if ($appointment->schedule) {
                 $appointment->schedule->update(['is_available' => true]);
             }

@@ -29,7 +29,7 @@ class ReviewController extends Controller
             'comment' => $validated['comment'],
         ]);
 
-        // Update doctor rating
+
         $doctor = $appointment->doctor;
         $doctor->rating = $doctor->appointments()->has('review')->average('review.rating');
         $doctor->save();

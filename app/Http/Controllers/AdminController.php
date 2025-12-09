@@ -19,7 +19,7 @@ class AdminController extends Controller
 
     public function index()
     {
-        // Админ дашборд: статистика
+
         return view('admin.dashboard');
     }
 
@@ -75,7 +75,7 @@ class AdminController extends Controller
         return redirect()->route('admin.dashboard')->with('success', 'Service created');
     }
 
-    // Другие методы: updateService, deleteUser и т.д.
+
     public function updateService(Request $request, Service $service)
     {
         $validated = $request->validate([
