@@ -118,18 +118,18 @@ class DoctorController extends Controller
 }
 
 
-/*     public function cancel(Appointment $appointment) */
-/* { */
-/*     if ($appointment->doctor_id !== auth()->user()->doctor->id) { */
-/*         abort(403); */
-/*     } */
-/**/
-/*     $success = $this->scheduleService->cancelAppointment($appointment, auth()->user()->doctor); */
-/**/
-/**/
-/**/
-/*     return $success ? back()->with('success', 'Запись отменена, слот освобождёт') : back()->with('error', 'Не удалось отменить запись'); */
-/* } */
+    public function cancel(Appointment $appointment)
+    {
+        if ($appointment->doctor_id !== auth()->user()->doctor->id) {
+            abort(403);
+        }
+
+        $success = $this->scheduleService->cancelAppointment($appointment, auth()->user()->doctor);
+
+
+
+        return $success ? back()->with('success', 'Запись отменена, слот освобождёт') : back()->with('error', 'Не удалось отменить запись');
+    }
 /**/
 /* public function complete(Appointment $appointment) */
 /* { */

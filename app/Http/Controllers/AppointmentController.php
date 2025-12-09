@@ -83,17 +83,21 @@ public function store(Request $request, Doctor $doctor)
     return view('appointments.pay', compact('appointment'));
 }
 
-public function processPayment(Appointment $appointment)
+public function processPayment(Request $request, Appointment $appointment)
 {
     if ($appointment->patient_id !== auth()->id() || $appointment->payment_status !== 'pending') {
         abort(403);
     }
 
+    $request->validate([
+        'send_notification' => 'nullable|boolean'
+    ]);
+
     try {
-        $this->appointmentService->processPayment($appointment);
+        $this->appointmentService->processPayment($appointment, $request->boolean('send_notification'));
 
     } catch (Exception $e) {
-        return redirect()-route('patient.dashboard')->with('error', $e->getMessage());
+        return redirect()->route('patient.dashboard')->with('error', $e->getMessage());
     }
 
     return redirect()->route('patient.dashboard')

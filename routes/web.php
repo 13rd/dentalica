@@ -55,7 +55,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/dashboard', [DoctorController::class, 'dashboard'])->name('doctor.dashboard');
         Route::get('/schedule', [DoctorController::class, 'schedule'])->name('doctor.schedule');
         Route::post('/appointment/{appointment}/complete', [AppointmentController::class, 'complete'])->name('doctor.appointment.complete');
-        /* Route::post('/appointment/{appointment}/cancel', [DoctorController::class, 'cancel'])->name('doctor.cancel'); */
+        Route::post('/appointment/{appointment}/cancel', [DoctorController::class, 'cancel'])->name('doctor.cancel');
         Route::get('/schedule/create', [DoctorController::class, 'getSchedule'])->name('doctor.schedule.create');
         Route::post('/schedule/create', [DoctorController::class, 'createSchedule']);
     });

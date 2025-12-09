@@ -19,12 +19,38 @@ class PatientController extends Controller
     public function dashboard()
     {
         $user = auth()->user();
-        $appointments = $user->appointments()
+
+        // Get today's appointments (paid or with active timer)
+        $todaysPaidAppointments = $user->appointments()
             ->with(['doctor.user', 'schedule', 'services'])
+            ->join('schedules', 'appointments.schedule_id', '=', 'schedules.id')
+            ->where('schedules.date', today())
+            ->where(function($query) {
+                $query->where('appointments.payment_status', 'paid')
+                      ->orWhere(function($q) {
+                          $q->where('appointments.payment_status', 'pending')
+                            ->whereNotNull('appointments.expires_at')
+                            ->where('appointments.expires_at', '>', now());
+                      });
+            })
+            ->orderBy('schedules.date')
+            ->orderBy('schedules.time_slot')
+            ->select('appointments.*')
+            ->get();
+
+        // Get other appointments (not today's paid ones)
+        $otherAppointments = $user->appointments()
+            ->with(['doctor.user', 'schedule', 'services'])
+            ->where(function($query) {
+                $query->where('payment_status', '!=', 'paid')
+                      ->orWhereHas('schedule', function($subQuery) {
+                          $subQuery->where('date', '!=', today());
+                      });
+            })
             ->latest()
             ->get();
 
-        return view('patient.dashboard', compact('appointments'));
+        return view('patient.dashboard', compact('todaysPaidAppointments', 'otherAppointments'));
     }
 
     public function profile()

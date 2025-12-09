@@ -5,8 +5,10 @@ namespace App\Services;
 use App\Models\Appointment;
 use App\Models\Schedule;
 use App\Models\Service;
+use App\Mail\AppointmentCreated;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 class AppointmentService
 {
@@ -58,7 +60,7 @@ class AppointmentService
     }
 
 
-    public function processPayment(Appointment $appointment): void
+    public function processPayment(Appointment $appointment, bool $sendNotification = false): void
     {
         if ($appointment->payment_status !== 'pending') {
             throw new \Exception('Запись уже обработана.');
@@ -74,6 +76,11 @@ class AppointmentService
             'paid_at'        => now(),
             'expires_at'     => null,
         ]);
+
+        // Send notification if requested
+        if ($sendNotification) {
+            Mail::to($appointment->patient->email)->send(new AppointmentCreated($appointment));
+        }
     }
 
 
