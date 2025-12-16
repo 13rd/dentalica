@@ -34,7 +34,7 @@ class AppointmentController extends Controller
             ->get()
             ->groupBy('date');
 
-        $services = Service::all();
+        $services = $doctor->services;
 
         return view('appointments.create', compact('doctor', 'schedules', 'services'));
     }

@@ -81,6 +81,7 @@
                         </div>
 
                         <!-- Услуги (необязательно) -->
+                        @if($services->isNotEmpty())
                         <div class="mb-5">
                             <h5 class="mb-4 text-success">Дополнительные услуги (по желанию)</h5>
                             <div class="row row-cols-1 row-cols-md-2 g-3">
@@ -101,6 +102,7 @@
                                 @endforeach
                             </div>
                         </div>
+                        @endif
 
                         <!-- Кнопка записи -->
                         <div class="text-center">

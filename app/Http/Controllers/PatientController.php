@@ -69,28 +69,61 @@ class PatientController extends Controller
 
         return back()->with('success', 'Профиль обновлён');
     }
-    public function weekAppointments()
+    public function weekAppointments(Request $request)
     {
         $start = Carbon::today();
         $end = Carbon::today()->addDays(6);
 
-        $slotsByDate = Schedule::with(['doctor.user'])
+        $selectedServiceIds = $request->get('services', []);
+
+        // Get all available slots first
+        $query = Schedule::with(['doctor.user', 'doctor.services'])
             ->where('is_available', true)
-            ->whereBetween('date', [$start->toDateString(), $end->toDateString()])
-            ->orderBy('date')
+            ->whereBetween('date', [$start->toDateString(), $end->toDateString()]);
+
+        // Filter by selected services if any are chosen
+        if (!empty($selectedServiceIds)) {
+            $query->whereHas('doctor.services', function ($q) use ($selectedServiceIds) {
+                $q->whereIn('services.id', $selectedServiceIds);
+            });
+        }
+
+        $slotsByDate = $query->orderBy('date')
             ->orderBy('time_slot')
             ->get()
             ->groupBy(function ($slot) {
                 return Carbon::parse($slot->date)->toDateString();
             });
 
-        $services = Service::all();
+        // Group services by doctor for the weekly view
+        $servicesByDoctor = [];
+        $doctors = [];
+
+        foreach ($slotsByDate as $date => $slots) {
+            foreach ($slots as $slot) {
+                $doctorId = $slot->doctor_id;
+                if (!isset($servicesByDoctor[$doctorId])) {
+                    $servicesByDoctor[$doctorId] = $slot->doctor->services->toArray();
+                    $doctors[$doctorId] = $slot->doctor;
+                }
+            }
+        }
+
+        // Get all available services for the filter
+        $allServices = collect();
+        foreach ($doctors as $doctor) {
+            $allServices = $allServices->merge($doctor->services);
+        }
+        $allServices = $allServices->unique('id')->sortBy('name');
 
         return view('patient.appointments.week', [
             'slotsByDate' => $slotsByDate,
-            'services'    => $services,
-            'start'       => $start,
-            'end'         => $end,
+            'servicesByDoctor' => $servicesByDoctor,
+            'doctors' => $doctors,
+            'allServices' => $allServices,
+            'selectedServiceIds' => $selectedServiceIds,
+            'start' => $start,
+            'end' => $end,
         ]);
     }
 

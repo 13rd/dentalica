@@ -14,8 +14,80 @@
         </span>
     </div>
 
+    <!-- Service Filter -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title mb-3">Фильтр по услугам</h5>
+            <form method="GET" id="serviceFilterForm">
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-2">
+                            @foreach($allServices as $service)
+                                <div class="col">
+                                    <div class="form-check">
+                                        <input class="form-check-input service-filter" type="checkbox"
+                                               name="services[]" value="{{ $service->id }}"
+                                               id="service_{{ $service->id }}"
+                                               {{ in_array($service->id, $selectedServiceIds) ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="service_{{ $service->id }}">
+                                            {{ $service->name }}
+                                            @if(!is_null($service->price))
+                                                <span class="text-muted">({{ number_format($service->price) }} ₽)</span>
+                                            @endif
+                                        </label>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter"></i> Применить фильтр
+                            </button>
+                            @if(!empty($selectedServiceIds))
+                                <a href="{{ route('patient.appointments.week') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times"></i> Сбросить фильтр
+                                </a>
+                            @endif
+                        </div>
+                        @if(!empty($selectedServiceIds))
+                            <div class="mt-3">
+                                <small class="text-muted">
+                                    Выбрано услуг: {{ count($selectedServiceIds) }}
+                                </small>
+                                <div class="mt-2">
+                                    <small class="text-info">
+                                        <i class="fas fa-info-circle"></i>
+                                        Показаны только врачи, предоставляющие выбранные услуги
+                                    </small>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
     @if($slotsByDate->isEmpty())
-        <div class="alert alert-info">Нет доступных слотов на ближайшие 7 дней.</div>
+        <div class="alert alert-info">
+            @if(!empty($selectedServiceIds))
+                Нет доступных слотов для выбранных услуг на ближайшие 7 дней.
+                <br><small>Попробуйте выбрать другие услуги или сбросить фильтр.</small>
+            @else
+                Нет доступных слотов на ближайшие 7 дней.
+            @endif
+        </div>
+    @else
+        @if(!empty($selectedServiceIds))
+            <div class="alert alert-success">
+                <small>
+                    <i class="fas fa-check-circle"></i>
+                    Найдено {{ count($doctors) }} врач(ей), предоставляющих выбранные услуги
+                </small>
+            </div>
+        @endif
     @endif
 
     <div class="row g-4">
@@ -87,22 +159,10 @@
                         <select class="form-select" id="doctorSelect" required></select>
                     </div>
 
-                    <div class="mb-4">
+                    <div class="mb-4" id="servicesSection" style="display: none;">
                         <label class="form-label">Услуги (необязательно)</label>
-                        <div class="row g-2">
-                            @foreach($services as $service)
-                                <div class="col-sm-6">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="service_ids[]" value="{{ $service->id }}" id="service_{{ $service->id }}">
-                                        <label class="form-check-label" for="service_{{ $service->id }}">
-                                            {{ $service->name }}
-                                            @if(!is_null($service->price))
-                                                <span class="text-muted">({{ $service->price }} ₽)</span>
-                                            @endif
-                                        </label>
-                                    </div>
-                                </div>
-                            @endforeach
+                        <div class="row g-2" id="servicesContainer">
+                            <!-- Services will be populated dynamically based on selected doctor -->
                         </div>
                     </div>
 
@@ -117,6 +177,19 @@
 </div>
 
 <script>
+// Service filtering functionality
+document.addEventListener('DOMContentLoaded', () => {
+    // Handle service filter checkboxes
+    const serviceCheckboxes = document.querySelectorAll('.service-filter');
+
+    serviceCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            // Auto-submit form when checkbox changes (optional - can be removed if user prefers manual submit)
+            // document.getElementById('serviceFilterForm').submit();
+        });
+    });
+});
+
 document.addEventListener('DOMContentLoaded', () => {
     const modalElement = document.getElementById('bookingModal');
     const bookingModal = new bootstrap.Modal(modalElement);
@@ -124,7 +197,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const scheduleIdInput = document.getElementById('scheduleId');
     const doctorSelect = document.getElementById('doctorSelect');
     const slotInfo = document.getElementById('slotInfo');
+    const servicesSection = document.getElementById('servicesSection');
+    const servicesContainer = document.getElementById('servicesContainer');
     const storeRouteTemplate = @json(route('appointments.store', ['doctor' => '__ID__']));
+    const servicesByDoctor = @json($servicesByDoctor);
 
     let currentOptions = [];
 
@@ -135,6 +211,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         scheduleIdInput.value = chosen.schedule_id;
         bookingForm.action = storeRouteTemplate.replace('__ID__', chosen.doctor_id);
+
+        // Update services section based on selected doctor
+        updateServicesForDoctor(doctorId);
+    };
+
+    const updateServicesForDoctor = (doctorId) => {
+        const doctorServices = servicesByDoctor[doctorId] || [];
+
+        if (doctorServices.length > 0) {
+            servicesContainer.innerHTML = '';
+            doctorServices.forEach(service => {
+                const serviceDiv = document.createElement('div');
+                serviceDiv.className = 'col-sm-6';
+                serviceDiv.innerHTML = `
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="service_ids[]" value="${service.id}" id="service_${service.id}">
+                        <label class="form-check-label" for="service_${service.id}">
+                            ${service.name}
+                            ${service.price ? `<span class="text-muted">(${service.price} ₽)</span>` : ''}
+                        </label>
+                    </div>
+                `;
+                servicesContainer.appendChild(serviceDiv);
+            });
+            servicesSection.style.display = 'block';
+        } else {
+            servicesSection.style.display = 'none';
+        }
     };
 
     document.querySelectorAll('.time-slot-btn').forEach((button) => {

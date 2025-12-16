@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Service;
+use App\Models\Doctor;
 use Illuminate\Database\Seeder;
 
 class ServiceSeeder extends Seeder
@@ -20,11 +21,40 @@ class ServiceSeeder extends Seeder
             ['name' => 'Удаление зуба мудрости сложное', 'price' => 9500],
         ];
 
+        $createdServices = [];
         foreach ($services as $service) {
-            Service::updateOrCreate(
+            $createdServices[] = Service::updateOrCreate(
                 ['name' => $service['name']],
                 ['price' => $service['price']]
             );
+        }
+
+        // Assign services to doctors based on their specializations
+        $doctors = Doctor::with('specialization')->get();
+
+        foreach ($doctors as $doctor) {
+            $servicesToAssign = [];
+
+            switch ($doctor->specialization->name) {
+                case 'Терапевт':
+                    // Therapist gets general dental services
+                    $servicesToAssign = [0, 1, 2, 3]; // hygiene, caries treatment, whitening, crowns
+                    break;
+                case 'Ортодонт':
+                    // Orthodontist gets orthodontic services
+                    $servicesToAssign = [5]; // braces
+                    break;
+                case 'Хирург-имплантолог':
+                    // Surgeon gets surgical services
+                    $servicesToAssign = [4, 6, 7]; // implants, simple extraction, complex extraction
+                    break;
+            }
+
+            foreach ($servicesToAssign as $index) {
+                if (isset($createdServices[$index])) {
+                    $doctor->services()->attach($createdServices[$index]->id);
+                }
+            }
         }
     }
 }
