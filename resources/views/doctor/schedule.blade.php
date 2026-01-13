@@ -9,12 +9,17 @@
     @forelse($schedules as $date => $slots)
         <div class="card mb-4 shadow-sm">
             <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">
-                    {{ \Carbon\Carbon::parse($date)->translatedFormat('d F Y (l)') }}
-                    @if($date == today()->format('Y-m-d'))
-                        <span class="badge bg-light text-dark ms-2">Сегодня</span>
-                    @endif
-                </h5>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        {{ \Carbon\Carbon::parse($date)->translatedFormat('d F Y (l)') }}
+                        @if($date == today()->format('Y-m-d'))
+                            <span class="badge bg-light text-dark ms-2">Сегодня</span>
+                        @endif
+                    </h5>
+                    <a href="{{ route('doctor.schedule.create') }}?date={{ $date }}" class="btn btn-light btn-sm">
+                        <i class="fas fa-plus"></i> Добавить слот
+                    </a>
+                </div>
             </div>
             <div class="card-body">
                 @foreach($slots as $slot)
@@ -81,7 +86,17 @@
                                         </button>
                                     </form>
                                 @else
-                                    <span class="text-muted">—</span>
+                                    <div class="btn-group" role="group">
+                                        
+                                        <form method="POST" action="{{ route('doctor.schedule.delete', $slot) }}" class="d-inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-outline-danger btn-sm"
+                                                    onclick="return confirm('Удалить этот временной слот?')">
+                                                <i class="fas fa-trash"></i> Удалить
+                                            </button>
+                                        </form>
+                                    </div>
                                 @endif
                             </div>
                         </div>

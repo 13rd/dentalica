@@ -42,4 +42,9 @@ class Doctor extends Model
     {
         return $this->belongsToMany(Service::class);
     }
+
+    public function schedulePreferences()
+    {
+        return $this->hasOne(DoctorSchedulePreference::class);
+    }
 };

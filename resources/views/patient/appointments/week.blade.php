@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
-@section('title', 'Запись на неделю')
+@section('title', 'Запись на две недели')
 
 @section('content')
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="mb-1">Запись на неделю</h2>
+            <h2 class="mb-1">Запись на две недели</h2>
             <p class="text-muted mb-0">Выберите время, затем подтвердите запись</p>
         </div>
         <span class="badge text-bg-light text-secondary fw-semibold">
@@ -73,10 +73,10 @@
     @if($slotsByDate->isEmpty())
         <div class="alert alert-info">
             @if(!empty($selectedServiceIds))
-                Нет доступных слотов для выбранных услуг на ближайшие 7 дней.
+                Нет доступных слотов для выбранных услуг на ближайшие 14 дней.
                 <br><small>Попробуйте выбрать другие услуги или сбросить фильтр.</small>
             @else
-                Нет доступных слотов на ближайшие 7 дней.
+                Нет доступных слотов на ближайшие 14 дней.
             @endif
         </div>
     @else
@@ -91,7 +91,7 @@
     @endif
 
     <div class="row g-4">
-        @for ($i = 0; $i < 7; $i++)
+        @for ($i = 0; $i < 14; $i++)
             @php
                 $date = now()->addDays($i);
                 $dateKey = $date->toDateString();
@@ -100,7 +100,7 @@
             @endphp
 
             <div class="col-lg-4 col-md-6">
-                <div class="card h-100 shadow-sm border-0">
+                <div class="card h-100 shadow-sm border-1">
                     <div class="card-header bg-white border-0">
                         <div class="fw-bold">{{ $date->isoFormat('DD MMMM, dddd') }}</div>
                         <small class="text-muted">Свободных окон: {{ $daySlots->count() }}</small>

@@ -20,7 +20,8 @@
 
                         <div class="mb-3">
                             <label class="form-label">Дата</label>
-                            <input type="date" name="date" class="form-control" required min="{{ today()->format('Y-m-d') }}">
+                            <input type="date" name="date" class="form-control" required min="{{ today()->format('Y-m-d') }}" 
+                                   value="{{ $prefilledDate ?? '' }}">
                         </div>
 
                         <div class="mb-3">

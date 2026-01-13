@@ -17,6 +17,9 @@
         </div>
     </div>
     <div class="text-end mb-3">
+        <a href="{{ route('doctor.schedule-preferences.edit') }}" class="btn btn-outline-secondary me-2">
+            Настройки расписания
+        </a>
         <a href="{{ route('doctor.schedule.create') }}" class="btn btn-success">
             Создать расписание
         </a>

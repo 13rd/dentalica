@@ -27,23 +27,43 @@ class DoctorController extends Controller
     public function index(Request $request)
     {
         $specializations = Specialization::all();
-        $query = Doctor::with('specialization', 'user');
+        $query = Doctor::with(['specialization', 'user', 'services']);
 
-        if ($request->spec) {
+        // Apply specialization filter
+        if ($request->filled('spec')) {
             $query->where('specialization_id', $request->spec);
         }
 
-        $doctors = $query->orderBy($request->get('sort', 'rating'), $request->get('direction', 'desc'))->paginate(10);
+        // Apply sorting with proper validation
+        $sortField = $request->get('sort', 'rating');
+        $sortDirection = $request->get('direction', 'desc');
+        
+        // Validate sort field to prevent SQL injection
+        $allowedSortFields = ['rating', 'name', 'experience'];
+        $sortField = in_array($sortField, $allowedSortFields) ? $sortField : 'rating';
+        $sortDirection = in_array($sortDirection, ['asc', 'desc']) ? $sortDirection : 'desc';
 
+        // For name sorting, we need to join with users table
+        if ($sortField === 'name') {
+            $query->join('users', 'doctors.user_id', '=', 'users.id')
+                  ->orderBy('users.name', $sortDirection)
+                  ->select('doctors.*');
+        } else {
+            $query->orderBy($sortField, $sortDirection);
+        }
 
+        $doctors = $query->paginate(10);
 
-
+        // Preserve all query parameters in pagination links
+        $doctors->appends($request->query());
 
         return view('doctors.index', compact('doctors', 'specializations'));
     }
 
     public function show(Doctor $doctor)
     {
+        $doctor->load(['specialization', 'user', 'services']);
+        
         $schedules = Schedule::where('doctor_id', $doctor->id)
             ->where('is_available', true)
             ->where('date', '>=', now())
@@ -57,10 +77,9 @@ class DoctorController extends Controller
     public function getSchedule(Request $request)
     {
         $doctor = auth()->user()->doctor;
+        $prefilledDate = $request->get('date');
 
-
-
-        return view('doctor.create_schedule', compact('doctor'));
+        return view('doctor.create_schedule', compact('doctor', 'prefilledDate'));
     }
     public function createSchedule(Request $request){
         $doctor = auth()->user()->doctor;
@@ -117,6 +136,66 @@ class DoctorController extends Controller
     return view('doctor.schedule', compact('schedules'));
 }
 
+
+    public function editTimeSlot(Schedule $schedule)
+    {
+        if ($schedule->doctor_id !== auth()->user()->doctor->id) {
+            abort(403);
+        }
+
+        return view('doctor.edit-time-slot', compact('schedule'));
+    }
+
+    public function updateTimeSlot(Request $request, Schedule $schedule)
+    {
+        if ($schedule->doctor_id !== auth()->user()->doctor->id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'time_slot' => 'required|date_format:H:i',
+            'is_available' => 'boolean',
+        ]);
+
+        // Проверяем, что слот не пересекается с другими слотами этого врача в тот же день
+        $existingSlot = Schedule::where('doctor_id', $schedule->doctor_id)
+            ->where('date', $schedule->date)
+            ->where('time_slot', $validated['time_slot'] . ':00')
+            ->where('id', '!=', $schedule->id)
+            ->first();
+
+        if ($existingSlot) {
+            return back()->withErrors(['time_slot' => 'На это время уже есть другой слот']);
+        }
+
+        // Если слот имеет активную запись, нельзя менять его доступность
+        if ($schedule->appointment && $schedule->appointment->status !== 'cancelled') {
+            return back()->withErrors(['is_available' => 'Нельзя изменить доступность слота с активной записью']);
+        }
+
+        $schedule->update([
+            'time_slot' => $validated['time_slot'] . ':00',
+            'is_available' => $validated['is_available'] ?? $schedule->is_available,
+        ]);
+
+        return redirect()->route('doctor.schedule')
+            ->with('success', 'Временной слот обновлён');
+    }
+
+    public function deleteTimeSlot(Schedule $schedule)
+    {
+        if ($schedule->doctor_id !== auth()->user()->doctor->id) {
+            abort(403);
+        }
+
+        if ($schedule->appointment && $schedule->appointment->status !== 'cancelled') {
+            return back()->with('error', 'Нельзя удалить слот с активной записью');
+        }
+
+        $schedule->delete();
+
+        return back()->with('success', 'Временной слот удалён');
+    }
 
     public function cancel(Appointment $appointment)
     {

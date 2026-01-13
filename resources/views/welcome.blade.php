@@ -62,7 +62,7 @@
                         @auth
                             @if(auth()->user()->isPatient())
                             <div class="mt-3">
-                                <a href="{{ route('doctors.show', $doctor) }}" class="btn btn-brand btn-sm w-100">
+                                <a href="{{ route('doctors.show', $doctor) }}" class="btn btn-brand btn-sm w-100 border">
                                     Записаться
                                 </a>
                             </div>

@@ -72,7 +72,7 @@ class PatientController extends Controller
     public function weekAppointments(Request $request)
     {
         $start = Carbon::today();
-        $end = Carbon::today()->addDays(6);
+        $end = Carbon::today()->addDays(13);
 
         $selectedServiceIds = $request->get('services', []);
 
@@ -83,9 +83,10 @@ class PatientController extends Controller
 
         // Filter by selected services if any are chosen
         if (!empty($selectedServiceIds)) {
+            // Ensure doctors provide ALL selected services (AND logic)
             $query->whereHas('doctor.services', function ($q) use ($selectedServiceIds) {
                 $q->whereIn('services.id', $selectedServiceIds);
-            });
+            }, '>=', count($selectedServiceIds));
         }
 
         $slotsByDate = $query->orderBy('date')

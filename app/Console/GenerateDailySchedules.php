@@ -9,7 +9,7 @@ class GenerateDailySchedules extends Command
 {
     protected $signature = 'schedules:generate';
 
-    protected $description = 'Generate schedules for the next week';
+    protected $description = 'Generate schedules for the next two weeks';
 
     public function handle()
     {

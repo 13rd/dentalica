@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\DoctorController;
+use App\Http\Controllers\DoctorSchedulePreferenceController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\ReviewController;
 use Illuminate\Support\Facades\Route;
@@ -63,6 +64,13 @@ Route::middleware('auth')->group(function () {
         Route::post('/appointment/{appointment}/cancel', [DoctorController::class, 'cancel'])->name('doctor.cancel');
         Route::get('/schedule/create', [DoctorController::class, 'getSchedule'])->name('doctor.schedule.create');
         Route::post('/schedule/create', [DoctorController::class, 'createSchedule']);
+        Route::get('/schedule/{schedule}/edit', [DoctorController::class, 'editTimeSlot'])->name('doctor.schedule.edit');
+        Route::put('/schedule/{schedule}', [DoctorController::class, 'updateTimeSlot'])->name('doctor.schedule.update');
+        Route::delete('/schedule/{schedule}', [DoctorController::class, 'deleteTimeSlot'])->name('doctor.schedule.delete');
+        
+        // Schedule preferences
+        Route::get('/schedule-preferences', [DoctorSchedulePreferenceController::class, 'edit'])->name('doctor.schedule-preferences.edit');
+        Route::put('/schedule-preferences', [DoctorSchedulePreferenceController::class, 'update'])->name('doctor.schedule-preferences.update');
     });
 
     // Admin routes
