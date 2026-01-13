@@ -19,6 +19,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Установка русской локали для правильного отображения дат
+        setlocale(LC_TIME, 'ru_RU.UTF-8', 'ru_RU', 'rus');
+        \Carbon\Carbon::setLocale('ru');
     }
 }

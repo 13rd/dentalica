@@ -14,7 +14,7 @@
         </span>
     </div>
 
-    <!-- Service Filter -->
+
     <div class="card mb-4 shadow-sm">
         <div class="card-body">
             <h5 class="card-title mb-3">Фильтр по услугам</h5>
@@ -102,7 +102,7 @@
             <div class="col-lg-4 col-md-6">
                 <div class="card h-100 shadow-sm border-0">
                     <div class="card-header bg-white border-0">
-                        <div class="fw-bold">{{ $date->translatedFormat('d F, l') }}</div>
+                        <div class="fw-bold">{{ $date->isoFormat('DD MMMM, dddd') }}</div>
                         <small class="text-muted">Свободных окон: {{ $daySlots->count() }}</small>
                     </div>
                     <div class="card-body">
@@ -118,11 +118,11 @@
                                 type="button"
                                 class="btn btn-outline-primary w-100 mb-2 text-start time-slot-btn"
                                 data-date="{{ $dateKey }}"
-                                data-date-human="{{ $date->translatedFormat('d F, l') }}"
+                                data-date-human="{{ $date->isoFormat('DD MMMM, dddd') }}"
                                 data-time="{{ $time }}"
                                 data-options='@json($slotOptions)'>
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span class="fw-semibold">{{ $time }}</span>
+                                    <span class="fw-semibold">{{ date('H:i', strtotime($time)) }}</span>
                                     <small class="text-muted">{{ $slots->count() }} врач(ей)</small>
                                 </div>
                             </button>
@@ -136,7 +136,7 @@
     </div>
 </div>
 
-<!-- Модалка для подтверждения записи -->
+
 <div class="modal fade" id="bookingModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
@@ -162,7 +162,7 @@
                     <div class="mb-4" id="servicesSection" style="display: none;">
                         <label class="form-label">Услуги (необязательно)</label>
                         <div class="row g-2" id="servicesContainer">
-                            <!-- Services will be populated dynamically based on selected doctor -->
+
                         </div>
                     </div>
 
@@ -177,7 +177,7 @@
 </div>
 
 <script>
-// Service filtering functionality
+
 document.addEventListener('DOMContentLoaded', () => {
     // Handle service filter checkboxes
     const serviceCheckboxes = document.querySelectorAll('.service-filter');

@@ -1,10 +1,10 @@
 @component('mail::message')
-# Appointment Confirmed
+# Запись подтверждена
 
-Date: {{ $appointment->schedule->date }}
-Time: {{ $appointment->schedule->time_slot }}
-Doctor: {{ $appointment->doctor->user->name }}
+Дата: {{ $appointment->schedule->date }}
+Время: {{ $appointment->schedule->time_slot }}
+Врач: {{ $appointment->doctor->user->name }}
 
-Thanks,
+Спасибо,
 {{ config('app.name') }}
 @endcomponent

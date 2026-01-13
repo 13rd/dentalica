@@ -1,23 +1,23 @@
 @extends('layouts.app')
 
 @section('content')
-    <h1>Doctors</h1>
+    <h1>Врачи</h1>
     <form method="GET">
         <select name="spec">
-            <option value="">All Specializations</option>
+            <option value="">Все специализации</option>
             @foreach ($specializations as $spec)
                 <option value="{{ $spec->id }}" {{ request('spec') == $spec->id ? 'selected' : '' }}>{{ $spec->name }}</option>
             @endforeach
         </select>
-        <button type="submit">Filter</button>
+        <button type="submit">Фильтр</button>
     </form>
     <table class="table">
         <thead>
             <tr>
-                <th>Name <a href="?sort=name&direction=asc">↑</a><a href="?sort=name&direction=desc">↓</a></th>
-                <th>Specialization</th>
-                <th>Rating <a href="?sort=rating&direction=asc">↑</a><a href="?sort=rating&direction=desc">↓</a></th>
-                <th>Actions</th>
+                <th>Имя <a href="?sort=name&direction=asc">↑</a><a href="?sort=name&direction=desc">↓</a></th>
+                <th>Специализация</th>
+                <th>Рейтинг <a href="?sort=rating&direction=asc">↑</a><a href="?sort=rating&direction=desc">↓</a></th>
+                <th>Действия</th>
             </tr>
         </thead>
         <tbody>
@@ -26,7 +26,7 @@
                     <td>{{ $doctor->user->name }}</td>
                     <td>{{ $doctor->specialization->name }}</td>
                     <td>{{ $doctor->rating }}</td>
-                    <td><a href="{{ route('doctors.show', $doctor) }}">View</a></td>
+                    <td><a href="{{ route('doctors.show', $doctor) }}">Просмотр</a></td>
                 </tr>
             @endforeach
         </tbody>

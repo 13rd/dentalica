@@ -14,7 +14,12 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    $doctors = \App\Models\Doctor::with(['user', 'specialization'])
+        ->orderBy('rating', 'desc')
+        ->take(6)
+        ->get();
+
+    return view('welcome', compact('doctors'));
 });
 
 Route::middleware('auth')->group(function () {
@@ -63,11 +68,36 @@ Route::middleware('auth')->group(function () {
     // Admin routes
     Route::middleware('role:admin')->prefix('admin')->group(function () {
         Route::get('/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
+
+        // Doctor management
+        Route::get('/doctors', [AdminController::class, 'listDoctors'])->name('admin.doctors.index');
         Route::get('/doctors/create', [AdminController::class, 'createDoctor'])->name('admin.doctors.create');
         Route::post('/doctors', [AdminController::class, 'storeDoctor'])->name('admin.doctors.store');
+        Route::get('/doctors/{doctor}', [AdminController::class, 'showDoctor'])->name('admin.doctors.show');
+        Route::get('/doctors/{doctor}/edit', [AdminController::class, 'editDoctor'])->name('admin.doctors.edit');
+        Route::patch('/doctors/{doctor}', [AdminController::class, 'updateDoctor'])->name('admin.doctors.update');
+        Route::delete('/doctors/{doctor}', [AdminController::class, 'deleteDoctor'])->name('admin.doctors.delete');
+        Route::get('/doctors/{doctor}/report', [AdminController::class, 'doctorReport'])->name('admin.doctors.report');
+
+        // Service management
+        Route::get('/services', [AdminController::class, 'listServices'])->name('admin.services.index');
         Route::get('/services/create', [AdminController::class, 'createService'])->name('admin.services.create');
         Route::post('/services', [AdminController::class, 'storeService'])->name('admin.services.store');
+        Route::get('/services/{service}', [AdminController::class, 'showService'])->name('admin.services.show');
+        Route::get('/services/{service}/edit', [AdminController::class, 'editService'])->name('admin.services.edit');
         Route::patch('/services/{service}', [AdminController::class, 'updateService'])->name('admin.services.update');
+        Route::delete('/services/{service}', [AdminController::class, 'deleteService'])->name('admin.services.delete');
+
+        // Doctor-Service relationships
+        Route::get('/doctor-services', [AdminController::class, 'manageDoctorServices'])->name('admin.doctor-services.index');
+        Route::post('/doctor-services', [AdminController::class, 'updateDoctorServices'])->name('admin.doctor-services.update');
+
+        // Patient management
+        Route::get('/patients', [AdminController::class, 'listPatients'])->name('admin.patients.index');
+        Route::get('/patients/{user}', [AdminController::class, 'showPatient'])->name('admin.patients.show');
+        Route::get('/patients/{user}/edit', [AdminController::class, 'editPatient'])->name('admin.patients.edit');
+        Route::patch('/patients/{user}', [AdminController::class, 'updatePatient'])->name('admin.patients.update');
+        Route::delete('/patients/{user}', [AdminController::class, 'deletePatient'])->name('admin.patients.delete');
     });
 
     //Route::post('/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])->name('appointments.cancel');

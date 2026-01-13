@@ -1,26 +1,26 @@
 @extends('layouts.app')
 
 @section('content')
-    <h1>My Appointments</h1>
+    <h1>Мои записи</h1>
 
     <!-- Today's Appointments Section -->
     @if($todaysPaidAppointments->count() > 0)
     <div class="card mb-4">
         <div class="card-header bg-success text-white">
-            <h5 class="mb-0">Today's Appointments</h5>
+            <h5 class="mb-0">Записи на сегодня</h5>
         </div>
         <div class="card-body p-0">
             <table class="table table-striped mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Date</th>
-                        <th>Time</th>
-                        <th>Doctor</th>
-                        <th>Services</th>
-                        <th>Status</th>
-                        <th>Payment</th>
-                        <th>Total</th>
-                        <th>Actions</th>
+                        <th>Дата</th>
+                        <th>Время</th>
+                        <th>Врач</th>
+                        <th>Услуги</th>
+                        <th>Статус</th>
+                        <th>Оплата</th>
+                        <th>Итого</th>
+                        <th>Действия</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -37,13 +37,26 @@
                         @endforelse
                     </td>
                     <td>
-                        <span class="badge bg-{{ $app->status == 'confirmed' ? 'success' : 'secondary' }}">
-                            {{ $app->status }}
+                        <span class="badge bg-{{
+                            $app->status == 'confirmed' ? 'success' :
+                            ($app->status == 'completed' ? 'primary' :
+                            ($app->status == 'pending' ? 'warning' :
+                            ($app->status == 'cancelled' ? 'danger' : 'secondary')))
+                        }}">
+                            {{ $app->status == 'confirmed' ? 'Подтверждено' : ($app->status == 'pending' ? 'Ожидает' : ($app->status == 'completed' ? 'Завершено' : ($app->status == 'cancelled' ? 'Отменено' : $app->status))) }}
                         </span>
                     </td>
                     <td>
-                        <span class="badge bg-{{ $app->payment_status == 'paid' ? 'success' : 'warning' }}">
-                            {{ $app->payment_status == 'paid' ? 'Оплачено' : 'Ожидает оплаты' }}
+                        <span class="badge bg-{{
+                            $app->payment_status == 'paid' ? 'success' :
+                            ($app->payment_status == 'pending' ? 'warning' :
+                            ($app->payment_status == 'cancelled' ? 'danger' : 'secondary'))
+                        }}">
+                            {{
+                                $app->payment_status == 'paid' ? 'Оплачено' :
+                                ($app->payment_status == 'pending' ? 'Ожидает оплаты' :
+                                ($app->payment_status == 'cancelled' ? 'Отменено' : $app->payment_status))
+                            }}
                         </span>
                         @if($app->payment_status == 'pending' && $app->expires_at && now()->lessThan($app->expires_at))
                             <small class="text-danger d-block">
@@ -140,20 +153,20 @@
     @if($otherAppointments->count() > 0)
     <div class="card">
         <div class="card-header">
-            <h5 class="mb-0">Other Appointments</h5>
+            <h5 class="mb-0">Другие записи</h5>
         </div>
         <div class="card-body p-0">
             <table class="table table-striped mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Date</th>
-                        <th>Time</th>
-                        <th>Doctor</th>
-                        <th>Services</th>
-                        <th>Status</th>
-                        <th>Payment</th>
-                        <th>Total</th>
-                        <th>Actions</th>
+                        <th>Дата</th>
+                        <th>Время</th>
+                        <th>Врач</th>
+                        <th>Услуги</th>
+                        <th>Статус</th>
+                        <th>Оплата</th>
+                        <th>Итого</th>
+                        <th>Действия</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -170,13 +183,31 @@
                             @endforelse
                         </td>
                         <td>
-                            <span class="badge bg-{{ $app->status == 'confirmed' ? 'success' : 'secondary' }}">
-                                {{ $app->status }}
-                            </span>
+                        <span class="badge bg-{{
+                            $app->status == 'confirmed' ? 'success' :
+                            ($app->status == 'completed' ? 'primary' :
+                            ($app->status == 'pending' ? 'warning' :
+                            ($app->status == 'cancelled' ? 'danger' : 'secondary')))
+                        }}">
+                            {{
+                                $app->status == 'confirmed' ? 'Подтверждено' :
+                                ($app->status == 'completed' ? 'Завершено' :
+                                ($app->status == 'pending' ? 'Ожидает' :
+                                ($app->status == 'cancelled' ? 'Отменено' : $app->status)))
+                            }}
+                        </span>
                         </td>
                         <td>
-                            <span class="badge bg-{{ $app->payment_status == 'paid' ? 'success' : 'warning' }}">
-                                {{ $app->payment_status == 'paid' ? 'Оплачено' : 'Ожидает оплаты' }}
+                            <span class="badge bg-{{
+                                $app->payment_status == 'paid' ? 'success' :
+                                ($app->payment_status == 'pending' ? 'warning' :
+                                ($app->payment_status == 'cancelled' ? 'danger' : 'secondary'))
+                            }}">
+                                {{
+                                    $app->payment_status == 'paid' ? 'Оплачено' :
+                                    ($app->payment_status == 'pending' ? 'Ожидает оплаты' :
+                                    ($app->payment_status == 'cancelled' ? 'Отменено' : $app->payment_status))
+                                }}
                             </span>
                             @if($app->payment_status == 'pending' && $app->expires_at && now()->lessThan($app->expires_at))
                                 <small class="text-danger d-block">
